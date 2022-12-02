@@ -63,6 +63,78 @@ mod part_2 {
         use super::FULL_INPUT;
         println!("{}", solution(FULL_INPUT));
     }
+
+    /// More complex solution that avoids doing any allocations (Vec was
+    /// used in original solution)
+    mod no_allocation {
+        use std::ops::Add;
+
+        fn solution(input: &str) -> i32 {
+            input
+                .lines()
+                .map(|line| line.parse::<i32>().ok())
+                .chain(std::iter::once(None)) // add a "blank line" to complete the last group
+                .fold(
+                    (TopThree::new(), 0),
+                    |(top_three, current), next| match next {
+                        Some(n) => (top_three, current + n),
+                        None => (top_three.incorporating(current), 0),
+                    },
+                )
+                .0
+                .sum()
+        }
+
+        struct TopThree([i32; 3]);
+
+        impl TopThree {
+            pub fn new() -> Self {
+                Self([0, 0, 0])
+            }
+
+            pub fn incorporating(self, n: i32) -> Self {
+                let (min_index, min) = self.min();
+
+                let mut new = self.0;
+
+                if n > min {
+                    new[min_index] = n;
+                }
+
+                Self(new)
+            }
+
+            fn min(&self) -> (usize, i32) {
+                self.0.iter().enumerate().fold(
+                    (0, i32::MAX),
+                    |(min_index, min), (current_index, current)| {
+                        if *current < min {
+                            (current_index, *current)
+                        } else {
+                            (min_index, min)
+                        }
+                    },
+                )
+            }
+
+            pub fn sum(self) -> i32 {
+                self.0.into_iter().fold(0, Add::add)
+            }
+        }
+
+        #[test]
+        fn with_test_input() {
+            use super::super::TEST_INPUT;
+            use super::TEST_ANSWER;
+            assert_eq!(solution(TEST_INPUT), TEST_ANSWER);
+        }
+
+        #[test]
+        fn with_full_input() {
+            use super::super::FULL_INPUT;
+            println!("{}", solution(FULL_INPUT));
+        }
+    }
 }
 
 const TEST_INPUT: &str = "1000
