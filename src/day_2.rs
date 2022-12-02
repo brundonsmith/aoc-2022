@@ -6,14 +6,14 @@ mod part_1 {
         input
             .lines()
             .map(|line| {
-                let mut choices = line.split(' ');
-                let theirs = choices.next().unwrap().parse().unwrap();
-                let mine = choices.next().unwrap().parse().unwrap();
+                let mut choices = line.split(' '); // split the line into the parts before and after the whitespace
+                let theirs = choices.next().unwrap().parse().unwrap(); // parse the left segment into a Choice
+                let mine = choices.next().unwrap().parse().unwrap(); // parse the right segment into a Choice
 
-                Round { theirs, mine }
+                Round { theirs, mine } // combine the choices into a Round
             })
-            .map(|round| round.my_score())
-            .fold(0, Add::add)
+            .map(|round| round.my_score()) // for each round, get the score
+            .fold(0, Add::add) // total up the scores
     }
 
     const TEST_ANSWER: i32 = 15;
@@ -40,17 +40,17 @@ mod part_2 {
         input
             .lines()
             .map(|line| {
-                let mut choices = line.split(' ');
-                let theirs = choices.next().unwrap().parse().unwrap();
-                let outcome = choices.next().unwrap().parse().unwrap();
+                let mut choices = line.split(' '); // split the line into the parts before and after the whitespace
+                let theirs = choices.next().unwrap().parse().unwrap(); // parse the left segment into a Choice
+                let outcome = choices.next().unwrap().parse().unwrap(); // parse the right segment into an Outcome
 
                 Round {
-                    theirs,
-                    mine: theirs.choice_for_desired_outcome(outcome),
+                    theirs,                                           // their choice
+                    mine: theirs.choice_for_desired_outcome(outcome), // the choice I would need to make to get the desired outcome against their choice
                 }
             })
-            .map(|round| round.my_score())
-            .fold(0, Add::add)
+            .map(|round| round.my_score()) // for each round, get the score
+            .fold(0, Add::add) // total up the scores
     }
 
     const TEST_ANSWER: i32 = 12;
@@ -69,9 +69,57 @@ mod part_2 {
     }
 }
 
+/// Shared representation of the rock/paper/scissors concepts
+///
+/// It's worth explaining the from_int/to_int methods and how they drive the
+/// logic here.
+///
+/// Each Rock/Paper/Scissors Choice can be represented by an integer 0, 1, or 2.
+/// Suppose we have player one who picks Rock and player two who picks Scissors:
+/// ```
+/// Player 1: Rock -> 0
+/// Player 2: Scissors -> 2
+/// ```
+///
+/// We can then get the distance between thesetwo by subtracting them:
+/// ```
+/// 0 - 2 = -2
+/// ```
+///
+/// We have to do some modulus trickery to keep that number from getting
+/// negative, since a u8 can't hold negative numbers:
+/// ```
+/// ((0 + 3) - 2) % 3 = 1
+/// ```
+///
+/// This also prevents it from getting greater than 2; we "wrap around" to this
+/// 0, 1, 2 range.
+///
+/// We can then map this resulting number to an Outcome:
+/// ```
+/// 1 -> Win
+/// ```
+///
+/// If we do some more examples, we can see that this numeric strategy works
+/// for determining all match outcomes:
+/// ```
+/// Rock vs Scissors -> 0, 2 -> ((0 + 3) - 2) % 3 -> 1 -> Win
+/// Rock vs Paper -> 0, 1 -> ((0 + 3) - 1) % 3 -> 2 -> Lose
+/// Paper vs Paper -> 1, 1 -> ((1 + 3) - 1) % 3 -> 0 -> Draw
+/// Paper vs Scissors -> 1, 2 -> ((1 + 3) - 2) % 3 -> 2 -> Lose
+/// ```
+///
+/// This (see `outcome_against()`) lets us avoid hand-coding outcomes for every
+/// combination of Choice vs Choice (nine possible combinations), which would
+/// be easy to mess up! The same is true in the other direction for part 2:
+/// there would be nine hand-coded combinations of Choice + Desired Outcome.
+/// Instead, we can flip around the same math!
+/// (see `choice_for_desired_outcome()`)
+///
 mod common {
     use std::str::FromStr;
 
+    /// Represents a full round (with one choice for each player)
     #[derive(Clone, Copy)]
     pub struct Round {
         pub theirs: Choice,
@@ -79,11 +127,13 @@ mod common {
     }
 
     impl Round {
+        /// Compute "my" score: the value of the outcome of the match, plus the value of my choice
         pub fn my_score(self) -> i32 {
             self.mine.outcome_against(self.theirs).value() + self.mine.value()
         }
     }
 
+    /// Represents one of the three outcomes a round can have
     pub enum Outcome {
         Win,
         Lose,
@@ -91,6 +141,7 @@ mod common {
     }
 
     impl Outcome {
+        /// Point value of this outcome
         pub fn value(self) -> i32 {
             match self {
                 Outcome::Lose => 0,
@@ -99,10 +150,8 @@ mod common {
             }
         }
 
-        /**
-         * Int representing the difference between the two choices' int
-         * representations
-         */
+        /// Int 0, 1, or 2 representing the difference between the two choices'
+        /// int representations
         fn to_int(self) -> u8 {
             match self {
                 Outcome::Draw => 0,
@@ -121,6 +170,16 @@ mod common {
         }
     }
 
+    /// Make sure to_int and from_int agree with each other
+    #[test]
+    fn outcome_ints_are_reciprocal() {
+        for i in 0..10 {
+            let outcome = Outcome::from_int(i);
+            assert_eq!(i % 3, outcome.to_int());
+        }
+    }
+
+    /// Parse an Outcome from a string (allows .parse() to be used)
     impl FromStr for Outcome {
         type Err = ();
 
@@ -134,6 +193,7 @@ mod common {
         }
     }
 
+    /// Represents one of the three choices a player can make
     #[derive(Clone, Copy)]
     pub enum Choice {
         Rock,
@@ -142,18 +202,22 @@ mod common {
     }
 
     impl Choice {
+        /// Point value of this choice
         pub fn value(self) -> i32 {
             self.to_int() as i32 + 1
         }
 
+        /// When this choice is played against `other`, what is the outcome?
         pub fn outcome_against(self, other: Choice) -> Outcome {
             Outcome::from_int((self.to_int() + 3) - other.to_int())
         }
 
+        /// Given a "their" choice and a desired outcome, what choice do I need to play?
         pub fn choice_for_desired_outcome(self, outcome: Outcome) -> Choice {
             Choice::from_int(self.to_int() + outcome.to_int())
         }
 
+        /// An int representing this choice, for logic purposes
         fn to_int(self) -> u8 {
             match self {
                 Choice::Rock => 0,
@@ -172,6 +236,16 @@ mod common {
         }
     }
 
+    /// Make sure to_int and from_int agree with each other
+    #[test]
+    fn choice_ints_are_reciprocal() {
+        for i in 0..10 {
+            let choice = Choice::from_int(i);
+            assert_eq!(i % 3, choice.to_int());
+        }
+    }
+
+    /// Parse a Choice from a string (allows .parse() to be used)
     impl FromStr for Choice {
         type Err = ();
 

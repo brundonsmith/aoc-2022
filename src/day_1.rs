@@ -2,13 +2,13 @@ mod part_1 {
     fn solution(input: &str) -> i32 {
         input
             .lines()
-            .map(|line| line.parse::<i32>().ok())
+            .map(|line| line.parse::<i32>().ok()) // try and parse each line as an int. ints will come out to Some(int), blank lines will come out to None
             .chain(std::iter::once(None)) // add a "blank line" to complete the last group
-            .fold((0, 0), |(max, current), next| match next {
-                Some(n) => (max, current + n),
-                None => (max.max(current), 0),
+            .fold((0, 0), |(max, current_group), next| match next {
+                Some(n) => (max, current_group + n), // if we get another number, add it to the current group
+                None => (i32::max(max, current_group), 0), // if we get a blank line, figure out if the current group is the new max and reset the group sum for the next group
             })
-            .0
+            .0 // only need the maximum we found
     }
 
     const TEST_ANSWER: i32 = 24000;
@@ -33,22 +33,26 @@ mod part_2 {
     fn solution(input: &str) -> i32 {
         let mut totals = input
             .lines()
-            .map(|line| line.parse::<i32>().ok())
+            .map(|line| line.parse::<i32>().ok()) // try and parse each line as an int. ints will come out to Some(int), blank lines will come out to None
             .chain(std::iter::once(None)) // add a "blank line" to complete the last group
             .fold((Vec::new(), 0), |(mut totals, current), next| match next {
-                Some(n) => (totals, current + n),
+                Some(n) => (totals, current + n), // if we get another number, add it to the current group
                 None => {
+                    // if we get a blank line, append it to the vec of groups and then reset the group sum for the next group
+
                     totals.push(current);
 
                     (totals, 0)
                 }
             })
-            .0;
+            .0; // only need the vec of groups
 
-        totals.sort();
+        totals.sort(); // sort the groups, putting the top 3 at the end
 
-        let skip = totals.len() - 3;
-        totals.into_iter().skip(skip).fold(0, Add::add)
+        totals
+            .iter()
+            .skip(totals.len() - 3) // skip everything except the top 3 (last 3, because we sorted)
+            .fold(0, Add::add) // sum up the top three
     }
 
     const TEST_ANSWER: i32 = 45000;
@@ -66,27 +70,29 @@ mod part_2 {
         assert_eq!(solution(FULL_INPUT), FULL_ANSWER);
     }
 
-    /// More complex solution that avoids doing any allocations (Vec was
-    /// used in original solution)
+    /// More complex solution for part 2 that avoids doing any allocations (Vec
+    /// was used in the original solution)
     mod no_allocation {
         use std::ops::Add;
 
         fn solution(input: &str) -> i32 {
             input
                 .lines()
-                .map(|line| line.parse::<i32>().ok())
+                .map(|line| line.parse::<i32>().ok()) // try and parse each line as an int. ints will come out to Some(int), blank lines will come out to None
                 .chain(std::iter::once(None)) // add a "blank line" to complete the last group
                 .fold(
                     (TopThree::new(), 0),
                     |(top_three, current), next| match next {
-                        Some(n) => (top_three, current + n),
-                        None => (top_three.incorporating(current), 0),
+                        Some(n) => (top_three, current + n), // if we get another number, add it to the current group
+                        None => (top_three.incorporating(current), 0), // if we get a blank line, incorporate it into the top-three group and then reset the group sum for the next group
                     },
                 )
-                .0
-                .sum()
+                .0 // only need the top three
+                .sum() // sum them up
         }
 
+        /// A data structure specifically for holding and working with exactly
+        /// three "top three" numbers
         struct TopThree([i32; 3]);
 
         impl TopThree {
@@ -94,31 +100,34 @@ mod part_2 {
                 Self([0, 0, 0])
             }
 
+            /// If n is greater than the smallest of the three, replace that
+            /// one with it
             pub fn incorporating(self, n: i32) -> Self {
-                let (min_index, min) = self.min();
+                // In the current group of three, find the smallest number and its index in the group
+                let (min_index, min) = self.0.iter().enumerate().fold(
+                    (0, i32::MAX), // start with index zero and the maximum possible int (so that the first number we encounter will replace it)
+                    |(min_index, min), (current_index, current)| {
+                        if *current < min {
+                            // if we've found a new minium, replace it
+                            (current_index, *current)
+                        } else {
+                            // otherwise keep the existing minimum
+                            (min_index, min)
+                        }
+                    },
+                );
 
-                let mut new = self.0;
+                let mut new = self.0; // copy the current group of three for modification
 
+                // if n is greater than the current min, replace it
                 if n > min {
                     new[min_index] = n;
                 }
 
-                Self(new)
+                Self(new) // new group of three, with one of them possibly replaced
             }
 
-            fn min(&self) -> (usize, i32) {
-                self.0.iter().enumerate().fold(
-                    (0, i32::MAX),
-                    |(min_index, min), (current_index, current)| {
-                        if *current < min {
-                            (current_index, *current)
-                        } else {
-                            (min_index, min)
-                        }
-                    },
-                )
-            }
-
+            /// The sum of the current group of three
             pub fn sum(self) -> i32 {
                 self.0.into_iter().fold(0, Add::add)
             }
