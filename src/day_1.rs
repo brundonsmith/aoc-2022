@@ -12,6 +12,7 @@ mod part_1 {
     }
 
     const TEST_ANSWER: i32 = 24000;
+    const FULL_ANSWER: i32 = 66487;
 
     #[test]
     fn with_test_input() {
@@ -22,7 +23,7 @@ mod part_1 {
     #[test]
     fn with_full_input() {
         use super::FULL_INPUT;
-        println!("{}", solution(FULL_INPUT));
+        assert_eq!(solution(FULL_INPUT), FULL_ANSWER);
     }
 }
 
@@ -51,6 +52,7 @@ mod part_2 {
     }
 
     const TEST_ANSWER: i32 = 45000;
+    const FULL_ANSWER: i32 = 197301;
 
     #[test]
     fn with_test_input() {
@@ -61,7 +63,7 @@ mod part_2 {
     #[test]
     fn with_full_input() {
         use super::FULL_INPUT;
-        println!("{}", solution(FULL_INPUT));
+        assert_eq!(solution(FULL_INPUT), FULL_ANSWER);
     }
 
     /// More complex solution that avoids doing any allocations (Vec was
@@ -132,7 +134,8 @@ mod part_2 {
         #[test]
         fn with_full_input() {
             use super::super::FULL_INPUT;
-            println!("{}", solution(FULL_INPUT));
+            use super::FULL_ANSWER;
+            assert_eq!(solution(FULL_INPUT), FULL_ANSWER);
         }
     }
 }
