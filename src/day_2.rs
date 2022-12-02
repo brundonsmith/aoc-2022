@@ -113,7 +113,7 @@ mod part_2 {
 /// combination of Choice vs Choice (nine possible combinations), which would
 /// be easy to mess up! The same is true in the other direction for part 2:
 /// there would be nine hand-coded combinations of Choice + Desired Outcome.
-/// Instead, we can flip around the same math!
+/// Instead, we can flip around the same math and get our answer that way!
 /// (see `choice_for_desired_outcome()`)
 ///
 mod common {
