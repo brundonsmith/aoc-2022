@@ -76,19 +76,19 @@ mod part_2 {
 ///
 /// Each Rock/Paper/Scissors Choice can be represented by an integer 0, 1, or 2.
 /// Suppose we have player one who picks Rock and player two who picks Scissors:
-/// ```
+/// ```text
 /// Player 1: Rock -> 0
 /// Player 2: Scissors -> 2
 /// ```
 ///
 /// We can then get the distance between thesetwo by subtracting them:
-/// ```
+/// ```text
 /// 0 - 2 = -2
 /// ```
 ///
 /// We have to do some modulus trickery to keep that number from getting
 /// negative, since a u8 can't hold negative numbers:
-/// ```
+/// ```text
 /// ((0 + 3) - 2) % 3 = 1
 /// ```
 ///
@@ -96,13 +96,13 @@ mod part_2 {
 /// 0, 1, 2 range.
 ///
 /// We can then map this resulting number to an Outcome:
-/// ```
+/// ```text
 /// 1 -> Win
 /// ```
 ///
 /// If we do some more examples, we can see that this numeric strategy works
 /// for determining all match outcomes:
-/// ```
+/// ```text
 /// Rock vs Scissors -> 0, 2 -> ((0 + 3) - 2) % 3 -> 1 -> Win
 /// Rock vs Paper -> 0, 1 -> ((0 + 3) - 1) % 3 -> 2 -> Lose
 /// Paper vs Paper -> 1, 1 -> ((1 + 3) - 1) % 3 -> 0 -> Draw
