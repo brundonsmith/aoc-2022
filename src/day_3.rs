@@ -47,7 +47,7 @@ mod part_2 {
                     .find(|ch| second.contains(*ch) && third.contains(*ch)) // find the char that exists in both other lines
                     .expect("No badge found for group") // should be one in every group!
             })
-            .map(item_priority) // get its priority
+            .map(item_priority) // for each group's badge, get its priority
             .fold(0, Add::add) // total up the priorities
     }
 
