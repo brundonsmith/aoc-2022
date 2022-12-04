@@ -81,7 +81,7 @@ mod part_2 {
 /// Player 2: Scissors -> 2
 /// ```
 ///
-/// We can then get the distance between thesetwo by subtracting them:
+/// We can then get the distance between these two by subtracting them:
 /// ```text
 /// 0 - 2 = -2
 /// ```
